@@ -1,0 +1,5 @@
+.vscode/
+casos/
+*.o
+*.zip
+torneio_alunos
