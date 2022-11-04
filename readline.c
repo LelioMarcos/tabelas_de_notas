@@ -12,6 +12,7 @@ char *readline(FILE *stream) {
 
         str = realloc(str, sizeof(char) * (n_char + 1));
 
+        // Ler caracteres até achar um espaço (apenas uma palavra)
         if (c == ' ' || c == '\n' || c == EOF) {
             str[n_char] = '\0';
             break;

@@ -1,6 +1,5 @@
 /* 
     Implementação dos Alunos e do Sort
-
 */
 
 #include <stdio.h>
@@ -10,6 +9,7 @@
 #include "readline.h"
 
 // Nó da árvore para o sort
+typedef struct no no_t;
 struct no {
     aluno_t *item;
     no_t *left;
@@ -98,10 +98,7 @@ aluno_t *compara_aluno(aluno_t* aluno1, aluno_t* aluno2, int quant_provas) {
     int crit;
     int compara = compara_alunos_tipo(aluno1, aluno2, quant_provas, &crit);
 
-    if (compara == -1)  {
-        return aluno1;
-    } 
-
+    if (compara == -1) return aluno1;
     return aluno2;
 }
 
@@ -132,45 +129,52 @@ no_t *atualizar(no_t** raiz, aluno_t *aluno, int quant_provas) {
 // Função que constrói a árvore de torneio.
 no_t *torneioGeralSort(aluno_t **vet, int min, int max, int quant_provas) {
     int m;
-    no_t *p = (no_t*)malloc(sizeof(no_t));
+    no_t *no = (no_t*)malloc(sizeof(no_t));
 
     // Calcula o meio do vetor, para executar para cada metade do vetor recursivamente.
     m = (min + max) / 2;
     if (min == max) { // Se for um nó folha
-        p->left = NULL;
-        p->right = NULL;
-        p->item = vet[m];
-        return p;
+        no->left = NULL;
+        no->right = NULL;
+        no->item = vet[m];
+        return no;
     } 
 
     // Executar para cada metade do vetor.
-    p->left = torneioGeralSort(vet, min, m, quant_provas);
-    p->right = torneioGeralSort(vet, m + 1, max, quant_provas);
+    no->left = torneioGeralSort(vet, min, m, quant_provas);
+    no->right = torneioGeralSort(vet, m + 1, max, quant_provas);
 
-    // Compara para escolher qual dos nós será pai;
-    p->item = compara_aluno(p->left->item, p->right->item, quant_provas);
+    // Na volta da recursiva, comparar para escolher qual dos nós será o pai.
+    no->item = compara_aluno(no->left->item, no->right->item, quant_provas);
 
-    return p;
+    return no;
 }
 
+// Função principal da ordenação.
 void sort(aluno_t **alunos, int n, int quant_provas) {
     no_t *raiz;
-    aluno_t *aluno_ant;
+    aluno_t *aluno_anterior;
 
+    // Construir a árvore inicial.
     raiz = torneioGeralSort(alunos, 0, n - 1, quant_provas);
+    // A raiz da árvore formada já o maior aluno.
     printf("Maior media: %.3f\n", calcular_media(raiz->item, quant_provas));
 
+    // Enquanto a árvore conter algum valor.
     for (int i = 1; i <= n; i++) {
         printf("%d. %s", i, raiz->item->nome);
         
-        aluno_ant = raiz->item;
+        aluno_anterior = raiz->item; // utilizado para determinar qual foi o critério de desempate entre o aluno novo e o aluno antigo.
+        // Atualizar a árvore para remover o maior valor e retornar a nova raíz
         raiz = atualizar(&raiz, raiz->item, quant_provas);  
 
+        // Se não tem aluno novo (já está no último aluno)
         if (raiz != NULL) {
             printf(" - ");
 
+            // Determinar qual foi o criterio de desempate.
             int desempate;
-            compara_alunos_tipo(aluno_ant, raiz->item, quant_provas, &desempate);
+            compara_alunos_tipo(aluno_anterior, raiz->item, quant_provas, &desempate);
             if (desempate == 0) printf("media");
             else printf("desempate: nota %d", desempate);
         }
@@ -178,9 +182,10 @@ void sort(aluno_t **alunos, int n, int quant_provas) {
         printf("\n");
     }
 
-    free(raiz);
+    free(raiz); // desfazer a raiz.
 }
 
+// Desalocar o aluno
 void destruir_aluno(aluno_t **aluno) {
     if (*aluno != NULL) {
         free((*aluno)->nome);
